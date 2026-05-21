@@ -1,12 +1,13 @@
 #include <iostream>
 #include <vector>
-#include <algorithm>
-#include <numeric>
 #include <random>
+#include <algorithm>
+#include <map>
 #include <iomanip>
 
 using namespace std;
 
+// Функция вывода массива
 void printArray(const vector<int>& arr) {
     for (int x : arr) {
         cout << x << " ";
@@ -15,13 +16,20 @@ void printArray(const vector<int>& arr) {
 }
 
 int main() {
-    // Генератор minstd_rand по методичке (вариант 14 -> вариант 4)
+    // Генератор случайных чисел
+    // Для варианта 14 используется генератор minstd_rand
     random_device rd;
     minstd_rand gen(rd());
-    uniform_int_distribution<int> dist(10, 100);
+
+    // Диапазон основного массива: [-200; 200]
+    uniform_int_distribution<int> distMain(-200, 200);
+
+    // Диапазон второго массива: [0; 10]
+    uniform_int_distribution<int> distSmall(0, 10);
 
     int n;
-    cout << "Введите размер массива (n >= 10): ";
+
+    cout << "Введите размер основного массива (n >= 10): ";
     cin >> n;
 
     if (n < 10) {
@@ -29,125 +37,197 @@ int main() {
         return 1;
     }
 
-    // 1. Генерация массива
-    vector<int> a(n);
-    for (int& x : a) {
-        x = dist(gen);
+    // Пункт 1
+    // Создание и заполнение массива случайными числами
+    vector<int> arr(n);
+
+    for (int& x : arr) {
+        x = distMain(gen);
     }
 
     cout << "\nИсходный массив:\n";
-    printArray(a);
+    printArray(arr);
 
-    // 2. Минимальный элемент и сумма остатков
-    int minValue = *min_element(a.begin(), a.end());
+    // Пункт 2
+    // Подсчет четных и нечетных элементов
+    int evenCount = 0;
+    int oddCount = 0;
 
-    int remainderSum = 0;
-    for (int x : a) {
-        remainderSum += x % minValue;
-    }
-
-    cout << "\nМинимальный элемент: " << minValue << endl;
-    cout << "Сумма остатков от деления на минимальный элемент: "
-         << remainderSum << endl;
-
-    // 3. Самая длинная непрерывная возрастающая последовательность
-    int bestStart = 0;
-    int bestLength = 1;
-
-    int currentStart = 0;
-    int currentLength = 1;
-
-    for (int i = 1; i < n; ++i) {
-        if (a[i] > a[i - 1]) {
-            ++currentLength;
+    for (int x : arr) {
+        if (x % 2 == 0) {
+            ++evenCount;
         } else {
-            if (currentLength > bestLength) {
-                bestLength = currentLength;
-                bestStart = currentStart;
+            ++oddCount;
+        }
+    }
+
+    cout << "\nКоличество четных элементов: "
+         << evenCount << endl;
+
+    cout << "Количество нечетных элементов: "
+         << oddCount << endl;
+
+    // Копия массива для сортировки
+    vector<int> sortedArray = arr;
+
+    // Если четных больше — сортировка по убыванию
+    if (evenCount > oddCount) {
+
+        sort(sortedArray.begin(),
+             sortedArray.end(),
+             greater<int>());
+
+        cout << "\nЧетных элементов больше."
+             << " Массив отсортирован по убыванию:\n";
+
+        printArray(sortedArray);
+    }
+
+    // Если нечетных больше — сортировка по возрастанию
+    else if (oddCount > evenCount) {
+
+        sort(sortedArray.begin(),
+             sortedArray.end());
+
+        cout << "\nНечетных элементов больше."
+             << " Массив отсортирован по возрастанию:\n";
+
+        printArray(sortedArray);
+    }
+
+    // Если количество одинаковое
+    else {
+        cout << "\nКоличество четных и нечетных элементов одинаково."
+             << "\nСортировка не требуется.\n";
+    }
+
+    // Пункт 3
+    // Циклический сдвиг массива на 2 элемента вправо
+    vector<int> shiftedArray = arr;
+
+    rotate(shiftedArray.rbegin(),
+           shiftedArray.rbegin() + 2,
+           shiftedArray.rend());
+
+    cout << "\nМассив после циклического сдвига"
+         << " на 2 элемента вправо:\n";
+
+    printArray(shiftedArray);
+
+    // Пункт 4
+    // Среднее арифметическое положительных элементов
+    int positiveSum = 0;
+    int positiveCount = 0;
+
+    for (int x : arr) {
+        if (x > 0) {
+            positiveSum += x;
+            ++positiveCount;
+        }
+    }
+
+    if (positiveCount == 0) {
+
+        cout << "\nВ массиве нет положительных чисел."
+             << endl;
+    }
+    else {
+
+        double positiveAverage =
+            static_cast<double>(positiveSum)
+            / positiveCount;
+
+        // Новый массив из чисел,
+        // которые больше среднего положительных
+        vector<int> greaterThanAverage;
+
+        for (int x : arr) {
+            if (x > positiveAverage) {
+                greaterThanAverage.push_back(x);
             }
+        }
 
-            currentStart = i;
-            currentLength = 1;
+        cout << fixed << setprecision(2);
+
+        cout << "\nСреднее арифметическое"
+             << " положительных чисел: "
+             << positiveAverage << endl;
+
+        cout << "Числа больше этого"
+             << " среднего значения:\n";
+
+        printArray(greaterThanAverage);
+    }
+
+    // Пункт 5
+    // Создание второго массива
+    int m;
+
+    cout << "\nВведите размер второго массива"
+         << " (m >= 20): ";
+
+    cin >> m;
+
+    if (m < 20) {
+        cout << "Ошибка: m должно быть не меньше 20."
+             << endl;
+        return 1;
+    }
+
+    vector<int> secondArray(m);
+
+    for (int& x : secondArray) {
+        x = distSmall(gen);
+    }
+
+    cout << "\nВторой массив:\n";
+    printArray(secondArray);
+
+    // Подсчет количества повторений
+    map<int, int> frequency;
+
+    for (int x : secondArray) {
+        ++frequency[x];
+    }
+
+    // Поиск числа,
+    // которое повторяется меньше всего раз
+    int leastFrequentNumber =
+        frequency.begin()->first;
+
+    int leastFrequency =
+        frequency.begin()->second;
+
+    for (const auto& item : frequency) {
+
+        if (item.second < leastFrequency) {
+
+            leastFrequency = item.second;
+            leastFrequentNumber = item.first;
         }
     }
 
-    if (currentLength > bestLength) {
-        bestLength = currentLength;
-        bestStart = currentStart;
-    }
+    cout << "\nЧисло, которое повторяется"
+         << " меньше всего раз: "
+         << leastFrequentNumber << endl;
 
-    vector<int> increasingSequence(
-        a.begin() + bestStart,
-        a.begin() + bestStart + bestLength
-    );
+    cout << "Количество повторений: "
+         << leastFrequency << endl;
 
-    cout << "\nСамая длинная непрерывная возрастающая последовательность:\n";
-    cout << "Размер последовательности: "
-         << increasingSequence.size() << endl;
-    cout << "Элементы последовательности:\n";
-    printArray(increasingSequence);
+    // Замена чисел,
+    // которые повторяются более двух раз
+    for (int& x : secondArray) {
 
-    // 4. Элементы больше среднего
-    double average =
-        accumulate(a.begin(), a.end(), 0.0) / a.size();
-
-    vector<int> greaterThanAverage;
-
-    for (int x : a) {
-        if (x > average) {
-            greaterThanAverage.push_back(x);
+        if (frequency[x] > 2) {
+            x = leastFrequentNumber;
         }
     }
 
-    sort(
-        greaterThanAverage.begin(),
-        greaterThanAverage.end(),
-        greater<int>()
-    );
+    cout << "\nВторой массив после замены"
+         << " чисел, повторяющихся"
+         << " более двух раз:\n";
 
-    int sumGreater =
-        accumulate(
-            greaterThanAverage.begin(),
-            greaterThanAverage.end(),
-            0
-        );
-
-    cout << "\nСреднее арифметическое: "
-         << fixed << setprecision(2)
-         << average << endl;
-
-    cout << "Элементы больше среднего значения (по убыванию):\n";
-    printArray(greaterThanAverage);
-
-    cout << "Количество элементов в новом массиве: "
-         << greaterThanAverage.size() << endl;
-
-    cout << "Сумма элементов нового массива: "
-         << sumGreater << endl;
-
-    // 5. Массив длиной N x 8 по рисунку
-    cout << "\nМассив длиной N x 8 по рисунку:\n";
-
-    vector<int> specialArray;
-    specialArray.reserve(n * 8);
-
-    int value = 100;
-    specialArray.push_back(value);
-
-    for (int i = 1; i < n * 8; ++i) {
-        // Приращения: 10, 20, 30, ..., 100, 10, 20, ...
-        int increment = ((i - 1) % 10 + 1) * 10;
-        value += increment;
-        specialArray.push_back(value);
-    }
-
-    for (int i = 0; i < n * 8; ++i) {
-        cout << setw(6) << specialArray[i];
-
-        if ((i + 1) % 8 == 0) {
-            cout << endl;
-        }
-    }
+    printArray(secondArray);
 
     return 0;
 }
