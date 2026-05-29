@@ -1,5 +1,6 @@
 use std::io;
 
+// Чтение строки чисел
 fn read_numbers() -> Vec<usize> {
     let mut input = String::new();
     io::stdin().read_line(&mut input).unwrap();
@@ -10,6 +11,8 @@ fn read_numbers() -> Vec<usize> {
         .collect()
 }
 
+// Проверка корректности голоса:
+// каждый кандидат должен встретиться ровно один раз
 fn check_vote(vote: &Vec<usize>, n: usize) -> bool {
     if vote.len() != n {
         return false;
@@ -32,7 +35,10 @@ fn check_vote(vote: &Vec<usize>, n: usize) -> bool {
     true
 }
 
-fn find_borda_winner(votes: &Vec<Vec<usize>>, n: usize) -> usize {
+// Метод Борда.
+// Возвращает Some(номер кандидата), если победитель один.
+// Возвращает None, если победителя нет из-за равенства баллов.
+fn find_borda_winner(votes: &Vec<Vec<usize>>, n: usize) -> Option<usize> {
     let mut points = vec![0usize; n + 1];
 
     for vote in votes {
@@ -48,17 +54,37 @@ fn find_borda_winner(votes: &Vec<Vec<usize>>, n: usize) -> usize {
         println!("Кандидат {}: {} баллов", candidate, points[candidate]);
     }
 
-    let mut winner = 1;
+    let mut max_points = points[1];
 
     for candidate in 2..=n {
-        if points[candidate] > points[winner] {
-            winner = candidate;
+        if points[candidate] > max_points {
+            max_points = points[candidate];
         }
     }
 
-    winner
+    let mut winners: Vec<usize> = Vec::new();
+
+    for candidate in 1..=n {
+        if points[candidate] == max_points {
+            winners.push(candidate);
+        }
+    }
+
+    if winners.len() > 1 {
+        print!("Победитель по методу Борда отсутствует: равенство баллов между кандидатами ");
+
+        for candidate in winners {
+            print!("{} ", candidate);
+        }
+
+        println!();
+        return None;
+    }
+
+    Some(winners[0])
 }
 
+// Проверяет, стоит ли candidate_a выше candidate_b в голосе одного избирателя
 fn is_higher(vote: &Vec<usize>, candidate_a: usize, candidate_b: usize) -> bool {
     for &candidate in vote {
         if candidate == candidate_a {
@@ -73,6 +99,9 @@ fn is_higher(vote: &Vec<usize>, candidate_a: usize, candidate_b: usize) -> bool 
     false
 }
 
+// Метод Кондорсе.
+// Возвращает Some(номер кандидата), если победитель есть.
+// Возвращает None, если победителя нет.
 fn find_condorcet_winner(votes: &Vec<Vec<usize>>, n: usize) -> Option<usize> {
     for candidate in 1..=n {
         let mut wins_all = true;
@@ -122,7 +151,7 @@ fn main() {
     let mut votes: Vec<Vec<usize>> = Vec::new();
 
     println!("\nВведите предпочтения каждого избирателя.");
-    println!("Каждая строка — номера кандидатов от лучшего к худшему.");
+    println!("Каждая строка - номера кандидатов от лучшего к худшему.");
 
     for i in 0..k {
         println!("Избиратель {}:", i + 1);
@@ -137,12 +166,12 @@ fn main() {
         votes.push(vote);
     }
 
-    let borda_winner = find_borda_winner(&votes, n);
-
-    println!(
-        "Победитель по методу Борда: кандидат {}",
-        borda_winner
-    );
+    match find_borda_winner(&votes, n) {
+        Some(winner) => {
+            println!("Победитель по методу Борда: кандидат {}", winner);
+        }
+        None => {}
+    }
 
     println!("\nМетод Кондорсе:");
 
